@@ -19,6 +19,15 @@ export const useLocation = () => {
     });
 
     const watchId = useRef<number>();
+    const isMounted = useRef(true);
+
+
+    useEffect(() => {
+        isMounted.current = true;
+        return () => {
+            isMounted.current = false;
+        }
+    }, [])
 
     
 
@@ -26,9 +35,12 @@ export const useLocation = () => {
 
         getCurrentLocation()
             .then( location => {
+
+                if( !isMounted.current ) return;
+
                 setInitialPosition(location);
                 setUserLocation(location);
-                setRouteLines([ ...routeLines, location ])
+                setRouteLines( routes => [ ...routes, location ])
                 setHasLocation(true);
             });
 
@@ -55,13 +67,16 @@ export const useLocation = () => {
         watchId.current = Geolocation.watchPosition(
             ({ coords }) => {
 
+                if( !isMounted.current ) return;
+
+
                 const location: Location = {
                     latitude: coords.latitude,
                     longitude: coords.longitude
                 }
 
                 setUserLocation( location );
-                setRouteLines([ ...routeLines, location ]);
+                setRouteLines( routes => [ ...routes, location ]);
 
             },
             (err) => console.log(err), { enableHighAccuracy: true, distanceFilter: 10 }
